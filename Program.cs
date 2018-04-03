@@ -19,15 +19,34 @@ namespace IzhAviaRPA
 {
 	class Program
 	{
-		private const string Param_FromCity = "Иж";
-		private const string Param_ToCity = "М";
-		private const string From_str = "Туда";
-		private const string Till_str = "Обратно";
+		private const string ParamFromCity = "Иж";
+		private const string ParamToCity = "М";
+		private const string ParamFamily = "Иванов";
+		private const string ParamName = "Аркадий";
+		private const string ParamPass = "9418558774";
+		private const string ParamPhone = "79508856698";
+		private const string ParamEmail = "shubin.it@mail.ru";
+
+		//private const string From_str = "Туда";
+		//private const string Till_str = "Обратно";
+
+		public void scrollWithOffset(IWebElement webElement, object driver, int x, int y)
+		{
+
+			String code = "window.scroll(" + (webElement.Location.X + x) + ","
+			              + (webElement.Location.Y + y) + ");";
+
+			((IJavaScriptExecutor)driver).ExecuteScript(code, webElement, x, y);
+
+		}
 
 		static void Main(string[] args)
 		{
-			DateTime from_date = new DateTime(2018, 04, 09);
-			DateTime till_date = new DateTime(2018, 04, 13);
+			DateTime fromDate = new DateTime(2018, 04, 09);
+			DateTime tillDate = new DateTime(2018, 04, 13);
+
+			DateTime birthDate = new DateTime(1984, 07, 06);
+
 
 			ChromeOptions options = new ChromeOptions();
 			//options.AddArguments("--headless");
@@ -37,25 +56,27 @@ namespace IzhAviaRPA
 			{
 				try
 				{
+					driver.Manage().Window.Maximize();
 					driver.Navigate().GoToUrl("https://booking.izhavia.su/websky/#/search");
+					
 
 					// TODO Переделать XPath на CSS
 					WebDriverWait wait = new WebDriverWait(driver, new TimeSpan(0, 0, 10));
 					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
 						By.XPath("//input[@placeholder='Откуда']")));
 
-					var FromCity = driver.FindElement(By.XPath("//input[@placeholder='Откуда']"));
-					var ToCity = driver.FindElement(By.XPath("//input[@placeholder='Куда']"));
-					FromCity.SendKeys(Param_FromCity);
-					ToCity.SendKeys(Param_ToCity);
+					var fromCity = driver.FindElement(By.XPath("//input[@placeholder='Откуда']"));
+					var toCity = driver.FindElement(By.XPath("//input[@placeholder='Куда']"));
+					fromCity.SendKeys(ParamFromCity);
+					toCity.SendKeys(ParamToCity);
 
 					driver.FindElements(By.CssSelector(
 						String.Format("button[data-pika-day='{0}'][data-pika-month='{1}'][data-pika-year='{2}']", 
-							from_date.Day, from_date.Month - 1, from_date.Year))).First().Click();
+							fromDate.Day, fromDate.Month - 1, fromDate.Year))).First().Click();
 
 					driver.FindElements(By.CssSelector(
 						String.Format("button[data-pika-day='{0}'][data-pika-month='{1}'][data-pika-year='{2}']",
-							till_date.Day, till_date.Month - 1, till_date.Year))).Last().Click();
+							tillDate.Day, tillDate.Month - 1, tillDate.Year))).Last().Click();
 
 					driver.FindElement(By.CssSelector("button.btn.btn_search.btn_formSearch.btn_formSearch_js")).Click();
 
@@ -64,69 +85,160 @@ namespace IzhAviaRPA
 						By.CssSelector("div.flightTable")));
 
 					//TODO Переделать с copy-paste на метод красивый
-					var to_flightTable = driver.FindElements(By.CssSelector("div.flightTable")).First();
-					var to_prices = to_flightTable.FindElements(By.CssSelector("a wrap"));
-					Dictionary<IWebElement, double> to_prices_list = new Dictionary<IWebElement, double>();
+					var toFlightTable = driver.FindElements(By.CssSelector("div.flightTable")).First();
+					var toPrices = toFlightTable.FindElements(By.CssSelector("a wrap"));
+					Dictionary<IWebElement, double> toPricesList = new Dictionary<IWebElement, double>();
 
-					var result_str = "";
-					foreach (var price in to_prices)
+					var resultStr = "";
+					foreach (var price in toPrices)
 					{
-						var str_price = price.Text;
-						var price_double_str = str_price.Substring(0, str_price.Length - 1).Trim();
-						double price_double;
-						if (double.TryParse(price_double_str, out price_double))
+						var strPrice = price.Text;
+						var priceDoubleStr = strPrice.Substring(0, strPrice.Length - 1).Trim();
+						double priceDouble;
+						if (double.TryParse(priceDoubleStr, out priceDouble))
 						{
-							to_prices_list.Add(price, price_double);
+							toPricesList.Add(price, priceDouble);
 							//prices.Add(price_double);
-							result_str += price_double + Environment.NewLine;
+							resultStr += priceDouble + Environment.NewLine;
 						}
 					}
 
-					var minimal_price = to_prices_list.OrderBy(p => p.Value).First();
-					var maximal_price = to_prices_list.OrderByDescending(p => p.Value).First();
+					var minimalPrice = toPricesList.OrderBy(p => p.Value).First();
+					var maximalPrice = toPricesList.OrderByDescending(p => p.Value).First();
 
-					result_str += Environment.NewLine + "Minimal cost: " 
-					                                  + minimal_price + Environment.NewLine + "Maximal cost: " 
-					                                  + maximal_price;
+					resultStr += Environment.NewLine + "Minimal cost: " 
+					                                  + minimalPrice + Environment.NewLine + "Maximal cost: " 
+					                                  + maximalPrice;
 
-					minimal_price.Key.Click();
+					minimalPrice.Key.Click();
 
-					result_str += Environment.NewLine + Environment.NewLine;
+					resultStr += Environment.NewLine + Environment.NewLine;
 
 					//$("div[class='flightTable']:not([class='chooseFlight__table'])")
-					var from_flightTable = driver.FindElements(By.CssSelector("div[class='flightTable']:not([class='chooseFlight__table'])")).Last();
+					var fromFlightTable = driver.FindElements(By.CssSelector("div[class='flightTable']:not([class='chooseFlight__table'])")).Last();
 
-					var from_prices = from_flightTable.FindElements(By.CssSelector("a wrap"));
-					Dictionary<IWebElement, double> from_prices_list = new Dictionary<IWebElement, double>();
+					var fromPrices = fromFlightTable.FindElements(By.CssSelector("a wrap"));
+					Dictionary<IWebElement, double> fromPricesList = new Dictionary<IWebElement, double>();
 
-					foreach (var price in from_prices)
+					foreach (var price in fromPrices)
 					{
-						var str_price = price.Text;
-						var price_double_str = str_price.Substring(0, str_price.Length - 1).Trim();
-						double price_double;
-						if (double.TryParse(price_double_str, out price_double))
+						var strPrice = price.Text;
+						var priceDoubleStr = strPrice.Substring(0, strPrice.Length - 1).Trim();
+						double priceDouble;
+						if (double.TryParse(priceDoubleStr, out priceDouble))
 						{
-							from_prices_list.Add(price, price_double);
+							fromPricesList.Add(price, priceDouble);
 							//prices.Add(price_double);
-							result_str += price_double + Environment.NewLine;
+							resultStr += priceDouble + Environment.NewLine;
 						}
 					}
 
-					minimal_price = from_prices_list.OrderBy(p => p.Value).First();
-					maximal_price = from_prices_list.OrderByDescending(p => p.Value).First();
+					minimalPrice = fromPricesList.OrderBy(p => p.Value).First();
+					maximalPrice = fromPricesList.OrderByDescending(p => p.Value).First();
 
-					result_str += Environment.NewLine + "Minimal cost: "
-					                                  + minimal_price + Environment.NewLine + "Maximal cost: "
-					                                  + maximal_price;
+					resultStr += Environment.NewLine + "Minimal cost: "
+					                                  + minimalPrice + Environment.NewLine + "Maximal cost: "
+					                                  + maximalPrice;
 
-					File.WriteAllText(@"C:\tmp\to_prices.txt", result_str);
+					
 
 					Thread.Sleep(2000);
 
-					minimal_price.Key.Click();
+					minimalPrice.Key.Click();
 
 					//$('a.btn_next')
 
+					Thread.Sleep(2000);
+
+					wait = new WebDriverWait(driver, new TimeSpan(0, 0, 10));
+					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
+						By.CssSelector("a.btn_next")));
+
+					
+
+					driver.FindElement(By.CssSelector("a.btn_next")).Click();
+
+					wait = new WebDriverWait(driver, new TimeSpan(0, 0, 10));
+					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
+						By.CssSelector("input[ng-model='passenger.lastName']")));
+					// Ввод данных о пассажире
+
+					driver.FindElement(By.CssSelector("input[ng-model='passenger.lastName']")).SendKeys(ParamFamily);
+					driver.FindElement(By.CssSelector("input[ng-model='passenger.firstName']")).SendKeys(ParamName);
+					driver.FindElement(By.CssSelector("input[ng-model='passenger.dateOfBirth']")).SendKeys(
+							birthDate.ToString("dd.MM.yyyy"));
+
+					var gender_elm = driver.FindElement(By.CssSelector("div.inp div[ng-model='passenger.gender']"));
+					gender_elm.Click();
+
+					Thread.Sleep(1000);
+
+					gender_elm.FindElements(By.CssSelector("div.ui-select-choices-row")).First().Click();
+
+					var doc_elm = driver.FindElement(By.CssSelector("div[ng-model='passenger.documentType']"));
+					doc_elm.Click();
+
+					Thread.Sleep(1000);
+
+					doc_elm.FindElements(By.CssSelector("div.ui-select-choices-row")).First().Click();
+					
+					//TODO все CSS селекторы переделать под ng-model
+					driver.FindElement(By.CssSelector("input[ng-model='passenger.documentNumber']")).SendKeys(ParamPass);
+					driver.FindElement(By.CssSelector("input[ng-model='passenger.phone']")).SendKeys(ParamPhone);
+					driver.FindElement(By.CssSelector("input[ng-model='passenger.email']")).SendKeys(ParamEmail);
+
+					driver.FindElement(By.CssSelector("div.iconfirm__i span")).Click();
+
+
+
+
+
+
+
+
+					Thread.Sleep(4000);
+
+					wait = new WebDriverWait(driver, new TimeSpan(0, 0, 10));
+					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
+						By.CssSelector("a.btn_next")));
+
+
+
+					driver.FindElement(By.CssSelector("a.btn_next")).Click();
+
+					Thread.Sleep(4000);
+
+					driver.FindElement(By.CssSelector("div.iconfirm__i span")).Click();
+
+					Thread.Sleep(4000);
+					wait = new WebDriverWait(driver, new TimeSpan(0, 0, 10));
+					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
+						By.CssSelector("a.btn_next")));
+					/*
+					try
+					{
+						driver.FindElement(By.CssSelector("path.jivo-st1")).Click();
+					}
+					finally
+					{
+					}
+					*/
+					driver.FindElement(By.CssSelector("a.btn_next")).Click();
+
+					wait = new WebDriverWait(driver, new TimeSpan(0, 0, 20));
+					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
+						By.CssSelector("span.orderNum")));
+					
+
+					resultStr += Environment.NewLine + "Бронирование: " + driver.Url;
+
+					Thread.Sleep(6000);
+
+					driver.FindElement(By.CssSelector("a.go_cancel websky-pay__footer__cancel__btn")).Click();
+
+					File.WriteAllText(@"C:\tmp\to_prices.txt", resultStr);
+
+					//TODO Сделать, чтобы драйвер нормально стопался
 					Console.WriteLine();
 
 				}
