@@ -30,7 +30,7 @@ namespace IzhAviaRPA
 		//private const string From_str = "Туда";
 		//private const string Till_str = "Обратно";
 
-		public void scrollWithOffset(IWebElement webElement, object driver, int x, int y)
+		public static void scrollWithOffset(IWebElement webElement, object driver, int x, int y)
 		{
 
 			String code = "window.scroll(" + (webElement.Location.X + x) + ","
@@ -42,8 +42,8 @@ namespace IzhAviaRPA
 
 		static void Main(string[] args)
 		{
-			DateTime fromDate = new DateTime(2018, 04, 09);
-			DateTime tillDate = new DateTime(2018, 04, 13);
+			DateTime fromDate = new DateTime(2018, 04, 04);
+			DateTime tillDate = new DateTime(2018, 04, 06);
 
 			DateTime birthDate = new DateTime(1984, 07, 06);
 
@@ -161,7 +161,10 @@ namespace IzhAviaRPA
 					wait = new WebDriverWait(driver, new TimeSpan(0, 0, 10));
 					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
 						By.CssSelector("input[ng-model='passenger.lastName']")));
+
 					// Ввод данных о пассажире
+
+					scrollWithOffset(driver.FindElement(By.CssSelector("h1.page-title")), driver, 0, 0);
 
 					driver.FindElement(By.CssSelector("input[ng-model='passenger.lastName']")).SendKeys(ParamFamily);
 					driver.FindElement(By.CssSelector("input[ng-model='passenger.firstName']")).SendKeys(ParamName);
@@ -189,40 +192,40 @@ namespace IzhAviaRPA
 
 					driver.FindElement(By.CssSelector("div.iconfirm__i span")).Click();
 
+					//scrollWithOffset(driver.FindElement(By.CssSelector("a.btn_next")), driver, 0, 0);
 
 
 
 
 
 
-
-					Thread.Sleep(4000);
+					Thread.Sleep(2000);
 
 					wait = new WebDriverWait(driver, new TimeSpan(0, 0, 10));
 					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
 						By.CssSelector("a.btn_next")));
 
 
-
+					// Дальше
 					driver.FindElement(By.CssSelector("a.btn_next")).Click();
 
-					Thread.Sleep(4000);
+					Thread.Sleep(2000);
 
+
+					scrollWithOffset(driver.FindElement(By.CssSelector("h1.page-title")), driver, 0, 0);
+					driver.ExecuteScript("document.body.style.zoom='65%'");
+
+					Thread.Sleep(4000);
+					driver.ExecuteScript("document.body.style.zoom='100%'");
+
+					scrollWithOffset(driver.FindElement(By.CssSelector("div.iconfirm__i span")), driver, 0, 0);
 					driver.FindElement(By.CssSelector("div.iconfirm__i span")).Click();
 
 					Thread.Sleep(4000);
 					wait = new WebDriverWait(driver, new TimeSpan(0, 0, 10));
 					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
 						By.CssSelector("a.btn_next")));
-					/*
-					try
-					{
-						driver.FindElement(By.CssSelector("path.jivo-st1")).Click();
-					}
-					finally
-					{
-					}
-					*/
+
 					driver.FindElement(By.CssSelector("a.btn_next")).Click();
 
 					wait = new WebDriverWait(driver, new TimeSpan(0, 0, 20));
@@ -232,11 +235,12 @@ namespace IzhAviaRPA
 
 					resultStr += Environment.NewLine + "Бронирование: " + driver.Url;
 
-					Thread.Sleep(6000);
+					//Thread.Sleep(6000);
 
-					driver.FindElement(By.CssSelector("a.go_cancel websky-pay__footer__cancel__btn")).Click();
+					//driver.FindElement(By.CssSelector("a.go_cancel websky-pay__footer__cancel__btn")).Click();
 
 					File.WriteAllText(@"C:\tmp\to_prices.txt", resultStr);
+					Thread.Sleep(10000);
 
 					//TODO Сделать, чтобы драйвер нормально стопался
 					Console.WriteLine();
@@ -244,7 +248,7 @@ namespace IzhAviaRPA
 				}
 				finally
 				{
-					driver.Close();
+					//driver.Close();
 				}
 			}
 			
