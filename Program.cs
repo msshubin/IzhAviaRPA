@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -25,11 +26,8 @@ namespace IzhAviaRPA
 
 		static void Main(string[] args)
 		{
-			DateTime from_date = new DateTime(2018, 04, 04);
-			DateTime till_date = new DateTime(2018, 04, 10);
-
-
-
+			DateTime from_date = new DateTime(2018, 04, 09);
+			DateTime till_date = new DateTime(2018, 04, 13);
 
 			ChromeOptions options = new ChromeOptions();
 			//options.AddArguments("--headless");
@@ -41,97 +39,93 @@ namespace IzhAviaRPA
 				{
 					driver.Navigate().GoToUrl("https://booking.izhavia.su/websky/#/search");
 
-					var window_pos = driver.Manage().Window.Position;
-					
-
-
-
-
+					// TODO Переделать XPath на CSS
 					WebDriverWait wait = new WebDriverWait(driver, new TimeSpan(0, 0, 10));
 					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
 						By.XPath("//input[@placeholder='Откуда']")));
-
 
 					var FromCity = driver.FindElement(By.XPath("//input[@placeholder='Откуда']"));
 					var ToCity = driver.FindElement(By.XPath("//input[@placeholder='Куда']"));
 					FromCity.SendKeys(Param_FromCity);
 					ToCity.SendKeys(Param_ToCity);
-					/*
-					JavascriptExecutor js = (JavascriptExecutor)webDriver;
-					js.executeScript("javascript:document.getElementById(\"sliderWidget\").value=1.5;");
 
-					System.out.println(slider.getAttribute("value"));
-					*/
-					//$('input[class="textInp calendarInp calendarInp_js ng-touched ng-not-empty ng-dirty ng-valid-parse ng-valid ng-valid-required"]').click()
-
-					//var from_button = driver.FindElement(By.Id("book_from"));
-					//from_button.Click();
-
-					//var FromDate = driver.FindElement(By.CssSelector(String.Format("input[placeholder='{0}'] button[data-pika-day='{1}'][data-pika-month='{2}'][data-pika-year='{3}']", From_str, from_date.Day, from_date.Month, from_date.Year)));
-					//FromDate.Click();
-					//driver.FindElement(By.Id("book_from")).SendKeys("04.04.2018");
-
-					var FromDate_elm = driver.FindElements(By.CssSelector(
+					driver.FindElements(By.CssSelector(
 						String.Format("button[data-pika-day='{0}'][data-pika-month='{1}'][data-pika-year='{2}']", 
-							from_date.Day, from_date.Month - 1, from_date.Year))).First();
-					var point1 = FromDate_elm.Location;
-					//Actions builder = new Actions(driver);
-					//builder.MoveToElement(FromDate_elm).Perform();
+							from_date.Day, from_date.Month - 1, from_date.Year))).First().Click();
 
-					FromDate_elm.Click();
-					/*
-					FromDate_elm = driver.FindElements(By.CssSelector(
+					driver.FindElements(By.CssSelector(
 						String.Format("button[data-pika-day='{0}'][data-pika-month='{1}'][data-pika-year='{2}']",
-							from_date.Day, from_date.Month - 1, from_date.Year))).First();
-*/
-					
-
-					//driver.FindElement(By.Id("book_to")).Click();
-
-
-					//Actions builder = new Actions(driver);
-					//builder.MoveToElement(TillDate_elm).Perform();
-
-					var TillDate_elm = driver.FindElements(By.CssSelector(
-						String.Format("button[data-pika-day='{0}'][data-pika-month='{1}'][data-pika-year='{2}']",
-							till_date.Day, till_date.Month - 1, till_date.Year))).Last();
-					var point2 = TillDate_elm.Location;
-					TillDate_elm.Click();
-
-					File.WriteAllText(@"C:\tmp\points.txt", "Window: " + window_pos + Environment.NewLine+ point1 + Environment.NewLine + point2);
+							till_date.Day, till_date.Month - 1, till_date.Year))).Last().Click();
 
 					driver.FindElement(By.CssSelector("button.btn.btn_search.btn_formSearch.btn_formSearch_js")).Click();
 
+					wait = new WebDriverWait(driver, new TimeSpan(0, 0, 10));
+					wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
+						By.CssSelector("div.flightTable")));
 
-					//driver.Mouse.MouseMove((ICoordinates)point2);
+					//TODO Переделать с copy-paste на метод красивый
+					var to_flightTable = driver.FindElements(By.CssSelector("div.flightTable")).First();
+					var to_prices = to_flightTable.FindElements(By.CssSelector("a wrap"));
+					Dictionary<IWebElement, double> to_prices_list = new Dictionary<IWebElement, double>();
 
-					/*
-					Actions action = new Actions(driver);
+					var result_str = "";
+					foreach (var price in to_prices)
+					{
+						var str_price = price.Text;
+						var price_double_str = str_price.Substring(0, str_price.Length - 1).Trim();
+						double price_double;
+						if (double.TryParse(price_double_str, out price_double))
+						{
+							to_prices_list.Add(price, price_double);
+							//prices.Add(price_double);
+							result_str += price_double + Environment.NewLine;
+						}
+					}
 
-					// First, go to your start point or Element
-					action.MoveToElement(FromDate_elm);
-					action.Perform();
+					var minimal_price = to_prices_list.OrderBy(p => p.Value).First();
+					var maximal_price = to_prices_list.OrderByDescending(p => p.Value).First();
 
-					// Then, move the mouse
-					action.MoveByOffset(100, 150);
-					action.Perform();
+					result_str += Environment.NewLine + "Minimal cost: " 
+					                                  + minimal_price + Environment.NewLine + "Maximal cost: " 
+					                                  + maximal_price;
 
-					// Then, move again (you can implement your one code to follow your curve...)
-					//action.MoveByOffset(-10, -10);
-					//action.Perform();
+					minimal_price.Key.Click();
 
-					// Finaly, click
-					action.Click();
-					action.Perform();
-					*/
+					result_str += Environment.NewLine + Environment.NewLine;
 
-					/*var TillDate_elm = driver.FindElements(By.CssSelector(
-						String.Format("button[data-pika-day='{0}'][data-pika-month='{1}'][data-pika-year='{2}']", 
-							till_date.Day, till_date.Month - 1, till_date.Year))).First();
+					//$("div[class='flightTable']:not([class='chooseFlight__table'])")
+					var from_flightTable = driver.FindElements(By.CssSelector("div[class='flightTable']:not([class='chooseFlight__table'])")).Last();
 
-					TillDate_elm.Click();*/
+					var from_prices = from_flightTable.FindElements(By.CssSelector("a wrap"));
+					Dictionary<IWebElement, double> from_prices_list = new Dictionary<IWebElement, double>();
 
+					foreach (var price in from_prices)
+					{
+						var str_price = price.Text;
+						var price_double_str = str_price.Substring(0, str_price.Length - 1).Trim();
+						double price_double;
+						if (double.TryParse(price_double_str, out price_double))
+						{
+							from_prices_list.Add(price, price_double);
+							//prices.Add(price_double);
+							result_str += price_double + Environment.NewLine;
+						}
+					}
 
+					minimal_price = from_prices_list.OrderBy(p => p.Value).First();
+					maximal_price = from_prices_list.OrderByDescending(p => p.Value).First();
+
+					result_str += Environment.NewLine + "Minimal cost: "
+					                                  + minimal_price + Environment.NewLine + "Maximal cost: "
+					                                  + maximal_price;
+
+					File.WriteAllText(@"C:\tmp\to_prices.txt", result_str);
+
+					Thread.Sleep(2000);
+
+					minimal_price.Key.Click();
+
+					//$('a.btn_next')
 
 					Console.WriteLine();
 
